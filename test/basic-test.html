@@ -84,7 +84,8 @@ suite('Polymer.IronA11yKeysBehavior', function() {
       ],
 
       keyBindings: {
-        'space': '_keyHandler'
+        'space': '_keyHandler',
+        'backspace': '_preventDefaultHandler'
       }
     });
 
@@ -127,8 +128,7 @@ suite('Polymer.IronA11yKeysBehavior', function() {
       ],
 
       keyBindings: {
-        'space': '_keyHandler',
-        'enter': '_preventDefaultHandler'
+        'space': '_keyHandler'
       }
     });
   });
@@ -141,6 +141,14 @@ suite('Polymer.IronA11yKeysBehavior', function() {
     test('trigger the handler when the specified key is pressed', function() {
       MockInteractions.pressSpace(keys);
 
+      expect(keys.keyCount).to.be.equal(1);
+    });
+
+    test('trigger the handler when the specified key is pressed together with a modifier', function() {
+      var event = new CustomEvent('keydown');
+      event.ctrlKey = true;
+      event.keyCode = event.code = 32;
+      keys.dispatchEvent(event);
       expect(keys.keyCount).to.be.equal(1);
     });
 
@@ -184,6 +192,24 @@ suite('Polymer.IronA11yKeysBehavior', function() {
       test('knows that `spacebar` is the same as `space`', function() {
         var event = new CustomEvent('keydown');
         event.key = 'spacebar';
+        expect(keys.keyboardEventMatchesKeys(event, 'space')).to.be.equal(true);
+      });
+
+      test('handles `+`', function() {
+        var event = new CustomEvent('keydown');
+        event.key = '+';
+        expect(keys.keyboardEventMatchesKeys(event, '+')).to.be.equal(true);
+      });
+
+      test('handles `:`', function() {
+        var event = new CustomEvent('keydown');
+        event.key = ':';
+        expect(keys.keyboardEventMatchesKeys(event, ':')).to.be.equal(true);
+      });
+
+      test('handles ` ` (space)', function() {
+        var event = new CustomEvent('keydown');
+        event.key = ' ';
         expect(keys.keyboardEventMatchesKeys(event, 'space')).to.be.equal(true);
       });
     });
@@ -279,16 +305,16 @@ suite('Polymer.IronA11yKeysBehavior', function() {
 
   suite('prevent default behavior of event', function() {
     setup(function() {
-      keys = fixture('BehaviorKeys');
+      keys = fixture('BasicKeys');
     });
     test('defaultPrevented is correctly set', function() {
-      var keySpy = sinon.spy();
+      var event = new CustomEvent('keydown', {
+        cancelable: true
+      });
+      event.keyCode = 8;
+      keys.dispatchEvent(event);
 
-      document.addEventListener('keydown', keySpy);
-
-      MockInteractions.pressEnter(keys);
-
-      expect(keySpy.getCall(0).args[0].defaultPrevented).to.be.equal(true);
+      expect(event.defaultPrevented).to.be.equal(true);
     });
   });
 
